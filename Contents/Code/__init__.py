@@ -73,9 +73,8 @@ def Shows(title, url, xpath):
 @route('/video/itvhub/hubshows')
 def HubShows(title, url, xpath):
     oc = ObjectContainer(title2=title)
-    Log('made it')
-    for program in HTML.ElementFromURL(url).xpath(xpath):
 
+    for program in HTML.ElementFromURL(url).xpath(xpath):
         Title = program.xpath('.//h3[contains(@class, "tout__title")]//text()')[0].strip()
         Log('Title:')
         Log(Title)
@@ -87,6 +86,8 @@ def HubShows(title, url, xpath):
         Summary = program.xpath('.//p[contains(@class, "tout__summary")]//text()')
         if Summary:
             Summary = Summary[0].strip()
+        else:
+            Summary = ''
 
         Log('Summary:')
         Log(Summary)
@@ -104,17 +105,66 @@ def HubShows(title, url, xpath):
         Log('Thumb:')
         Log(Thumb)
 
-        # oc.add(
-        #     EpisodeObject(
-        #         url=Url,
-        #         title=Title,
-        #         index=index,
-        #         season=season,
-        #         thumb=Resource.ContentsOfURLWithFallback(ProgrammeMediaUrl),
-        #         summary=AdditionalSynopsisText
-        #     )
-        # )
+        oc.add(
+            DirectoryObject(
+                key=Callback(Programs, title=Title, url=Url),
+                title=Title,
+                thumb=Resource.ContentsOfURLWithFallback(Thumb),
+                summary=Summary,
+                tagline=Meta
+            )
+        )
 
+    return oc
+
+
+##########################################################################################
+@route('/video/itvhub/programs')
+def Programs(title, url):
+    oc = ObjectContainer(title2=title)
+
+    for episode in HTML.ElementFromURL(url).xpath(ITV_HUB_FILTER):
+        Title = episode.xpath('.//h3[contains(@class, "tout__title")]//text()')
+        if Title:
+            Title = Title[0].strip()
+        else:
+            Title = ''
+        Log('Title:')
+        Log(Title)
+
+        Meta = episode.xpath('.//p[contains(@class, "tout__meta")]//text()')
+        if Meta:
+            Meta = Meta[0].strip()
+        else:
+            Meta = ''
+        Log('Meta:')
+        Log(Meta)
+
+        Summary = episode.xpath('.//p[contains(@class, "tout__summary")]//text()')
+        if Summary:
+            Summary = Summary[0].strip()
+        else:
+            Summary = ''
+
+        Log('Summary:')
+        Log(Summary)
+
+        Url = episode.xpath('./a/@href')
+        if Url:
+            Url = Url[0]
+        else:
+            Url = ''
+
+        Log('URL:')
+        Log(Url)
+
+        Thumb = episode.xpath('.//img[contains(@class, "fluid-media__media")]/@src')
+        if Thumb:
+            Thumb = Thumb[0]
+        else:
+            Thumb = ''
+        Log('Thumb:')
+        Log(Thumb)
 
         oc.add(
             EpisodeObject(
